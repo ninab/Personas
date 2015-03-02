@@ -12,41 +12,44 @@ class PDFJSPlugin extends GenericPlugin {
             	array(&$this, 'callback') 
         	); 
         	
-            $this->addLocaleData();
-            if ($this->getEnabled()) {
-            	// Insert header on every header (callback function checks if it addition is really need)
-            	HookRegistry::register('TemplateManager::display',array(&$this, 'PDFJSPlugin_TemplateCallback'));
-            }
-        	
+            $this->addLocaleData();        	
+
+			if ($this->getEnabled()) {
+				// Insert header on every header (callback function checks if it addition is really need)
+				HookRegistry::register('TemplateManager::display',array(&$this, 'PDFJSPlugin_TemplateCallback'));
+			}            
             return true; 
         } 
         return false; 
     } 
+    
     function getName() { 
         return 'PDFJSPlugin'; 
     } 
+    
     function getDisplayName() { 
         return 'PDF.js plugin'; 
     } 
-    function getDescription() { 
-        return 'The PDF.js plugin prepends an attached document with the document presented using the PDF.js code to allow a document to be presented inline and expose it to annotation.'; 
-    } 
     
-    function PDFJSPlugin_TemplateCallback($hookName, $args) {
-    	//First argument is a TemplateManager object.
-        $templateMgr =& $args[0];
-
-        //Getting some context.
-        $journal = &Request::getJournal();
-        $journalId = $journal->getJournalId();
-        $page = Request::getRequestedPage();
-        $op = Request::getRequestedOp();
-        $currentJournal = $templateMgr->get_template_vars('currentJournal');
-      
-        return false;
+    function getViewAnnotate() { 
+		return __('plugins.generic.pdfjsplugin.viewAnnotate');
     }
-
     
+	function PDFJSPlugin_TemplateCallback($hookName, $args) {
+		//First argument is a TemplateManager object.
+		$templateMgr =& $args[0];
+	
+		//Getting some context.
+		$journal = &Request::getJournal();
+		$journalId = $journal->getJournalId();
+		$page = Request::getRequestedPage();
+		$op = Request::getRequestedOp();
+		$currentJournal = $templateMgr->get_template_vars('currentJournal');
+
+		return false;
+	}
+    
+   
     function callback($hookName, $args) {   
     	import('classes.submission.author.AuthorSubmissionDAO');
 		import('classes.file.ArticleFileManager');
@@ -81,29 +84,29 @@ class PDFJSPlugin extends GenericPlugin {
         $PKPReview->setSubmissionId($submissionId);
  
 		foreach ($articleFiles as $articleFile) {
-			if (($articleFile->_data['filetype'] == 'application/pdf') && (strpos($articleFile->_data['fileName'],'-RV') > 1)) {
-				$aFile =& $file_manager->getFile($articleFile->_data['fileId'], $revision);
+			if (($articleFile->getFileType() == 'application/pdf') && (strpos($articleFile->getFileName(),'-RV') > 1)) {
+				$aFile =& $file_manager->getFile($articleFile->getFileId(), $revision);
 				$filePath = $file_manager->filesDir .  $file_manager->fileStageToPath($aFile->getFileStage()) . '/' . $aFile->getFileName(); 
 
-				$path_elements = array_filter(explode('/', $_SERVER['PATH_INFO']));	
+				$path_elements = array_filter(explode('/', Request::getRequestPath()));	
 				$journal = array_shift(array_values($path_elements));				
 				$reviewId = array_pop(array_values($path_elements));
 				
 				// $_SERVER['REQUEST_SCHEME']."://".$_SERVER['HTTP_HOST'].str_replace($_SERVER['PATH_INFO'],"", $_SERVER['REQUEST_URI'])."/".$journal."/reviewer/downloadFile/".$reviewId.'/'.$articleFile->_data['submissionId'].'/'.$articleFile->_data['fileId'].'/'.$articleFile->_data['revision'];
-				$new_path = Request::url(null, 'reviewer', 'downloadFile', array($reviewId, $articleFile->_data['submissionId'], $articleFile->_data['fileId'], $articleFile->_data['revision']));
+				$new_path = Request::url(null, 'reviewer', 'downloadFile', array($reviewId, $articleFile->getSubmissionId(), $articleFile->getFileId(), $articleFile->getRevision()));
 				
 				// work it into here
-				$plugin_dir = str_replace($_SERVER['DOCUMENT_ROOT'],"",dirname(__FILE__));
-	
-				// why is this not kicking out info?
+				list($discard,$pluginDir) = explode("/plugins/", dirname(__FILE__));
+				
+				$pluginUrl= Request::getBaseUrl()."/plugins/".$pluginDir;
+		
+				// the output: a link to the PDF.js HTML viewer
 				$output .= '<br/>';		
-				$output .= '<a href="'.$plugin_dir.'/pdfjs/web/viewer.html?file='.urlencode($new_path).'" target="_new">Open to view and annotate</a>';
+				$output .= '<a href="'.$pluginUrl.'/pdfjs/web/viewer.html?file='.urlencode($new_path).'" target="_new">'.$this->getViewAnnotate().'</a>';
 				$output .= '<br/>';		
 			}
 		}
 
-
-       
         return false; 
     } 
     
