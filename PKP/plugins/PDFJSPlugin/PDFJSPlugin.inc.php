@@ -5,6 +5,7 @@ import('lib.pkp.classes.db.DAO');
 class PDFJSPlugin extends GenericPlugin { 
 
     function register($category, $path) { 
+    	/ print __FILE__." on ".__LINE__." for ".__FUNCTION__."<br/>";
         if (parent::register($category, $path)) {    
 			HookRegistry::register( 
 				'Templates::Reviewer::Submission::inlineText',
@@ -13,13 +14,17 @@ class PDFJSPlugin extends GenericPlugin {
         	); 
         	
             $this->addLocaleData();        	
+            // print __FILE__." on ".__LINE__." for ".__FUNCTION__."<br/>";
 
 			if ($this->getEnabled()) {
 				// Insert header on every header (callback function checks if it addition is really need)
 				HookRegistry::register('TemplateManager::display',array(&$this, 'PDFJSPlugin_TemplateCallback'));
+		    	// print __FILE__." on ".__LINE__." for ".__FUNCTION__."<br/>";
 			}            
+		   	// print __FILE__." on ".__LINE__." for ".__FUNCTION__."<br/>";
             return true; 
         } 
+    	// print __FILE__." on ".__LINE__." for ".__FUNCTION__."<br/>";
         return false; 
     } 
     
@@ -31,6 +36,11 @@ class PDFJSPlugin extends GenericPlugin {
         return 'PDF.js plugin'; 
     } 
     
+ 	function getEnabled() {
+		if (Config::getVar('PDFJSPlugin', 'installed')) return true;
+		return false;
+	}	   
+    
     function getViewAnnotate() { 
 		return __('plugins.generic.pdfjsplugin.viewAnnotate');
     }
@@ -38,6 +48,7 @@ class PDFJSPlugin extends GenericPlugin {
 	function PDFJSPlugin_TemplateCallback($hookName, $args) {
 		//First argument is a TemplateManager object.
 		$templateMgr =& $args[0];
+    	// print __FILE__." on ".__LINE__." for ".__FUNCTION__."<br/>";
 	
 		//Getting some context.
 		$journal = &Request::getJournal();
@@ -46,6 +57,8 @@ class PDFJSPlugin extends GenericPlugin {
 		$op = Request::getRequestedOp();
 		$currentJournal = $templateMgr->get_template_vars('currentJournal');
 
+    	// print __FILE__." on ".__LINE__." for ".__FUNCTION__."<br/>";
+    	
 		return false;
 	}
     
@@ -110,22 +123,22 @@ class PDFJSPlugin extends GenericPlugin {
         return false; 
     } 
     
-/**
-* @see Plugin::manage()
-*/
-function manage($verb, $args, &$message, &$messageParams, &$pluginModalContent = null) {
-	if (!parent::manage($verb, $args, $message, $messageParams)) return false;
-		$request = $this->getRequest();
-		switch ($verb) {
-			case 'exampleVerb':
-				// Process the verb invocation
-				return false;
-			default:
-				// Unknown management verb
-				assert(false);
-				return false;
-		}
-	}    
+	/**
+	* @see Plugin::manage()
+	*/
+	function manage($verb, $args, &$message, &$messageParams, &$pluginModalContent = null) {
+		if (!parent::manage($verb, $args, $message, $messageParams)) return false;
+			$request = $this->getRequest();
+			switch ($verb) {
+				case 'exampleVerb':
+					// Process the verb invocation
+					return false;
+				default:
+					// Unknown management verb
+					assert(false);
+					return false;
+			}
+		}    
 } 
 
 ?>
