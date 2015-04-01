@@ -2,11 +2,16 @@
 
 print __FILE__." for ".__LINE__;
 
+/*
 import('classes.plugins.AuthPlugin');
 		
 class OAuthPlugin extends AuthPlugin {
+*/
 
+import('classes.plugins.GenericPlugin'); 
+// import('lib.pkp.classes.db.DAO');
 
+class OAuthPlugin extends GenericPlugin { 
 	/**
 	 * Called as a plugin is registered to the registry
 	 * @param $category String Name of category plugin was registered to
@@ -16,7 +21,7 @@ class OAuthPlugin extends AuthPlugin {
 	function register($category, $path) {
 		$success = parent::register($category, $path);
 
-		print __FILE__." on ".__LINE__." for ".__FUNCTION__."<br/>";
+		print __FILE__." on ".__LINE__." for ".__FUNCTION__. " - " . $success ."<br/>";
  		
 		// consumer elements from OAuth library
 		require_once(dirname(__FILE__).'/src/OAuth2/Autoloader.php');
@@ -89,10 +94,11 @@ class OAuthPlugin extends AuthPlugin {
 					$this->mysql = null;
 				}				
 			}
-			// Handler for OAuth requests
-			HookRegistry::register('LoadHandler', array($this, 'setupOAuthHandler'));
-		}			
-		// print __FILE__." on ".__LINE__." for ".__FUNCTION__."<br/>";		
+		}
+		// Handler for OAuth requests
+		HookRegistry::register('LoadHandler', array(&$this, 'setupOAuthHandler'));
+		
+		print __FILE__." on ".__LINE__." for ".__FUNCTION__."<br/>";		
 		
 		return $success;
 	}
@@ -134,8 +140,26 @@ class OAuthPlugin extends AuthPlugin {
 	}	
 	
 	function getEnabled() {
-		if (Config::getVar('OAuth', 'installed')) return true;
-		return false;
+		if (Config::getVar('general', 'installed')) return true;
+		return parent::getEnabled();
+	}	
+	
+	/**
+	 * Install default settings on system install.
+	 * @return string
+	 */
+	function getInstallSitePluginSettingsFile() {
+		print __FILE__." on ".__LINE__." for ".__FUNCTION__." and " . $this->getPluginPath() . "<br/>";
+		return $this->getPluginPath() . '/settings.xml';
+	}
+
+	/**
+	 * Install default settings on journal creation.
+	 * @return string
+	 */
+	function getContextSpecificPluginSettingsFile() {
+		print __FILE__." on ".__LINE__." for ".__FUNCTION__."<br/>";
+		return $this->getPluginPath() . '/settings.xml';
 	}	
 	
 	function getName() {
@@ -177,6 +201,7 @@ class OAuthPlugin extends AuthPlugin {
 	
 	function setupOAuthHandler($hookName, $params) {
 		$page =& $params[0];
+		print __FILE__." on ".__LINE__." for ".__FUNCTION__." and " . $page . "<br/>";		
 
 		if ($page == 'oauth') {
 			$op =& $params[1];
@@ -254,7 +279,8 @@ class OAuthPlugin extends AuthPlugin {
 
 	function getConsumerKey() {
 		// get the consumer key to start the process
-		
+		print __LINE__." - Hello world.";
+		exit;	
 	}
 	
 	function getLoginForm() {
@@ -363,5 +389,43 @@ class OAuthPlugin extends AuthPlugin {
 	function deleteUser($username) {
 		// deleting users is outside of the scope of OAuth
 		return false;
-	}	
+	}
+	
+
+	function getManagementVerbs() {
+		$verbs = parent::getManagementVerbs();
+		if (!$this->getEnabled()) return $verbs;
+		$verbs[] = array(
+			'settings', __('plugins.auth.OAuth.settings')
+		);
+		return $verbs;
+	}
+
+	function manage($verb, $args) {
+		if (parent::manage($verb, $args)) return true;
+		if (!$this->getEnabled()) return false;
+		switch ($verb) {
+			case 'settings':
+				$journal =& Request::getJournal();
+				$this->import('SettingsForm');
+				$form = new SettingsForm($this, $journal->getId());
+				if (Request::getUserVar('save')) {
+					$form->readInputData();
+					if ($form->validate()) {
+						$form->execute();
+						Request::redirect(null, null, 'plugins');
+					} else {
+						$form->display();
+					}
+				} else {
+					$form->initData();
+					$form->display();
+				}
+				break;
+			default:
+				return false;
+		}
+		return true;
+	}
+	
 }
