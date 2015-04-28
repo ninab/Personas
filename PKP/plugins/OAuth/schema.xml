@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE schema SYSTEM "../../../lib/pkp/dtd/xmlSchema.dtd">
+
+<!--
+  * plugins/generic/OAuth/schema.xml
+  *
+  * Copyright (c) 2014 Simon Fraser University Library
+  * Copyright (c) 2003-2014 John Willinsky
+  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
+  *
+  * OAUTH statistics plugin schema in XML.
+  
+  CREATE TABLE `oauth_clients` (client_id VARCHAR(80) NOT NULL, client_secret VARCHAR(80) NOT NULL, redirect_uri VARCHAR(2000) NOT NULL, grant_types VARCHAR(80), scope VARCHAR(100), user_id VARCHAR(80), CONSTRAINT clients_client_id_pk PRIMARY KEY (client_id));
+  CREATE TABLE `oauth_access_tokens` (access_token VARCHAR(40) NOT NULL, client_id VARCHAR(80) NOT NULL, user_id VARCHAR(255), expires TIMESTAMP NOT NULL, scope VARCHAR(2000), CONSTRAINT access_token_pk PRIMARY KEY (access_token));
+  CREATE TABLE `oauth_authorization_codes` (authorization_code VARCHAR(40) NOT NULL, client_id VARCHAR(80) NOT NULL, user_id VARCHAR(255), redirect_uri VARCHAR(2000), expires TIMESTAMP NOT NULL, scope VARCHAR(2000), CONSTRAINT auth_code_pk PRIMARY KEY (authorization_code));
+  CREATE TABLE `oauth_refresh_tokens` (refresh_token VARCHAR(40) NOT NULL, client_id VARCHAR(80) NOT NULL, user_id VARCHAR(255), expires TIMESTAMP NOT NULL, scope VARCHAR(2000), CONSTRAINT refresh_token_pk PRIMARY KEY (refresh_token));
+  CREATE TABLE `oauth_users` (username VARCHAR(255) NOT NULL, password VARCHAR(2000), first_name VARCHAR(255), last_name VARCHAR(255), CONSTRAINT username_pk PRIMARY KEY (username));
+  CREATE TABLE `oauth_scopes` (scope TEXT, is_default BOOLEAN);'
+  CREATE TABLE `oauth_jwt` (client_id VARCHAR(80) NOT NULL, subject VARCHAR(80), public_key VARCHAR(2000), CONSTRAINT jwt_client_id_pk PRIMARY KEY (client_id));
+-->
+<schema version="0.2">
+  <table name="oauth_clients">
+  	<field name="client_id" type="C" size="80">
+			<NOTNULL/>		
+	</field>
+	<field name="client_secret" type="C" size="80">
+		<NOTNULL/>
+	</field>
+	<field name="redirect_uri" type="C" size="2000">
+		<NOTNULL/>
+	</field>
+	<field name="grant_types" type="C" size="80">
+	</field>
+	<field name="scope" type="C" size="100">
+	</field>
+	<field name="user_id" type="C" size="80">
+	</field>
+  </table>
+  <table name="oauth_access_tokens">
+  	<field name="access_token" type="C" size="40">
+		<NOTNULL/>		
+	</field>
+	<field name="client_id" type="C" size="80">
+		<NOTNULL/>
+	</field>
+	<field name="user_id" type="C" size="255">
+	</field>
+	<field name="expires" type="T">
+		<NOTNULL/>		
+	</field>
+		<field name="scope" type="C" size="2000">
+	</field>
+  </table>
+  <table name="oauth_authorization_codes">
+  	<field name="authorization_code" type="C" size="40">
+		<NOTNULL/>		
+	</field>
+	<field name="client_id" type="C" size="80">
+		<NOTNULL/>	
+	</field>
+	<field name="user_id" type="C" size="255"></field>
+	<field name="redirect_uri" type="C" size="2000"></field>
+	<field name="expires" type="T">
+		<NOTNULL/>		
+	</field>
+	<field name="scope" type="C" size="2000">
+	</field>
+  </table>
+  <table name="oauth_refresh_tokens">
+  	<field name="refresh_token" type="C" size="40">
+		<NOTNULL/>		
+	</field>
+	<field name="client_id" type="C" size="80">
+		<NOTNULL/>
+	</field>
+	<field name="user_id" type="C" size="255">
+	</field>
+	<field name="expires" type="T">
+		<NOTNULL/>		
+	</field>
+	<field name="scope" type="C" size="2000">
+	</field>
+  </table>
+  <table name="oauth_users">
+  	<field name="username" type="C" size="255">
+		<NOTNULL/>		
+	</field>
+	<field name="password" type="C" size="2000">
+	</field>
+	<field name="first_name" type="C" size="255">
+	</field>
+	<field name="last_name" type="C" size="255">
+	</field>
+  </table>
+  <table name="oauth_scopes">
+  	<field name="scope">		
+  	</field>
+	<field name="is_default" type="L">
+	</field>
+  </table>
+  <table name="oauth_jwt">
+  	<field name="client_id" type="C" size="80">
+		<NOTNULL/>		
+	</field>
+	<field name="subject" type="C" size="80">		
+	</field>
+	<field name="public_key" type="C" size="2000">		
+	</field>	
+  </table>
+</schema>

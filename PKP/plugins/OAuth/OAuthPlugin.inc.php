@@ -1,13 +1,5 @@
 <?php 
 
-print __FILE__." for ".__LINE__;
-
-/*
-import('classes.plugins.AuthPlugin');
-		
-class OAuthPlugin extends AuthPlugin {
-*/
-
 import('classes.plugins.GenericPlugin'); 
 // import('lib.pkp.classes.db.DAO');
 
@@ -21,85 +13,25 @@ class OAuthPlugin extends GenericPlugin {
 	function register($category, $path) {
 		$success = parent::register($category, $path);
 
-		print __FILE__." on ".__LINE__." for ".__FUNCTION__. " - " . $success ."<br/>";
- 		
-		// consumer elements from OAuth library
-		require_once(dirname(__FILE__).'/src/OAuth2/Autoloader.php');
-		OAuth2\Autoloader::register();
-
-		// register test classes
-		OAuth2\Autoloader::register(dirname(__FILE__).'/lib');
-
-		print __FILE__." on ".__LINE__." for ".__FUNCTION__."<br/>";
-
-		$connectionCharset = Config::getVar('i18n', 'connection_charset');
-		$debug = Config::getVar('database', 'debug') ? true : false;
-		$connectOnInit = true;
-		$forceNew = false;	
-
-		$dsn = $this->getDriver().':dbname='.$this->getDatabasename().';host='.$this->getHost();
-	
-		// server elements
-
-		// print __FILE__." on ".__LINE__." for ".__FUNCTION__."<br/>";
-
-		// $dsn is the Data Source Name for your database, for exmaple "mysql:dbname=my_oauth2_db;host=localhost"
-		$storage = new OAuth2\Storage\Pdo(array('dsn' => $dsn, 'username' => $this->getUsername(), 'password' => $this->getPassword()));
-
-		// Pass a storage object or array of storage objects to the OAuth2 server class
-		$server = new OAuth2\Server($storage);
-
-		// Add the "Client Credentials" grant type (it is the simplest of the grant types)
-		$server->addGrantType(new OAuth2\GrantType\ClientCredentials($storage));
-
-		// Add the "Authorization Code" grant type (this is where the oauth magic happens)
-		$server->addGrantType(new OAuth2\GrantType\AuthorizationCode($storage));	
-
-		// print __FILE__." on ".__LINE__." for ".__FUNCTION__."<br/>";
-
-		$this->addLocaleData();
-		
-		// print __FILE__." on ".__LINE__." for ".__FUNCTION__."<br/>";	
 		if ($success && (!$this->getEnabled())) {		
 			// print __FILE__." on ".__LINE__." for ".__FUNCTION__."<br/>";		
-			if ($conn =& $this->getConnection())
-			{	
-				print __FILE__." on ".__LINE__." for ".__FUNCTION__."<br/>";		
-				if (!mysql_query('CREATE TABLE `oauth_clients` (client_id VARCHAR(80) NOT NULL, client_secret VARCHAR(80) NOT NULL, redirect_uri VARCHAR(2000) NOT NULL, grant_types VARCHAR(80), scope VARCHAR(100), user_id VARCHAR(80), CONSTRAINT clients_client_id_pk PRIMARY KEY (client_id));', $conn))
-				{
-					$this->mysql = null;
-				}
-				if (!mysql_query('CREATE TABLE `oauth_access_tokens` (access_token VARCHAR(40) NOT NULL, client_id VARCHAR(80) NOT NULL, user_id VARCHAR(255), expires TIMESTAMP NOT NULL, scope VARCHAR(2000), CONSTRAINT access_token_pk PRIMARY KEY (access_token));', $conn))
-				{
-					$this->mysql = null;
-				}				
-				if (!mysql_query('CREATE TABLE `oauth_authorization_codes` (authorization_code VARCHAR(40) NOT NULL, client_id VARCHAR(80) NOT NULL, user_id VARCHAR(255), redirect_uri VARCHAR(2000), expires TIMESTAMP NOT NULL, scope VARCHAR(2000), CONSTRAINT auth_code_pk PRIMARY KEY (authorization_code));', $conn))
-				{
-					$this->mysql = null;
-				}				
-				if (!mysql_query('CREATE TABLE `oauth_refresh_tokens` (refresh_token VARCHAR(40) NOT NULL, client_id VARCHAR(80) NOT NULL, user_id VARCHAR(255), expires TIMESTAMP NOT NULL, scope VARCHAR(2000), CONSTRAINT refresh_token_pk PRIMARY KEY (refresh_token));', $conn))
-				{
-					$this->mysql = null;
-				}				
-				if (!mysql_query('CREATE TABLE `oauth_users` (username VARCHAR(255) NOT NULL, password VARCHAR(2000), first_name VARCHAR(255), last_name VARCHAR(255), CONSTRAINT username_pk PRIMARY KEY (username));', $conn))
-				{
-					$this->mysql = null;
-				}				
-				if (!mysql_query('CREATE TABLE `oauth_scopes` (scope TEXT, is_default BOOLEAN);', $conn))
-				{
-					$this->mysql = null;
-				}				
-				if (!mysql_query('CREATE TABLE `oauth_jwt` (client_id VARCHAR(80) NOT NULL, subject VARCHAR(80), public_key VARCHAR(2000), CONSTRAINT jwt_client_id_pk PRIMARY KEY (client_id));', $conn))
-				{
-					$this->mysql = null;
-				}				
-			}
 		}
 		// Handler for OAuth requests
-		HookRegistry::register('LoadHandler', array(&$this, 'setupOAuthHandler'));
+		HookRegistry::register('Application::getRequest', array(&$this, 'setupOAuthHandler'));
 		
-		print __FILE__." on ".__LINE__." for ".__FUNCTION__."<br/>";		
+		$application =& PKPApplication::getApplication();
+		$products = $application->getEnabledProducts('plugins.generic');
+
+		// print __FILE__." on ".__LINE__." for <pre>".print_r($this, TRUE)."</pre><br/>";		
+		// print __FILE__." on ".__LINE__." for <pre>".print_r($_SERVER['PATH_INFO'], TRUE)."</pre><br/>";		
+		$params = array_values(array_filter(explode("/", $_SERVER['PATH_INFO'])));
 		
+		if ($params[1] == 'oauth') {
+			// print __FILE__." on ".__LINE__." for <pre>".print_r($params, TRUE)."</pre><br/>";				
+			unset($params[0]);
+			$this->setupOAuthHandler('OAuthPlugin', array_values($params));
+		}
+				
 		return $success;
 	}
 	
@@ -149,7 +81,7 @@ class OAuthPlugin extends GenericPlugin {
 	 * @return string
 	 */
 	function getInstallSitePluginSettingsFile() {
-		print __FILE__." on ".__LINE__." for ".__FUNCTION__." and " . $this->getPluginPath() . "<br/>";
+		// print __FILE__." on ".__LINE__." for ".__FUNCTION__." and " . $this->getPluginPath() . "<br/>";
 		return $this->getPluginPath() . '/settings.xml';
 	}
 
@@ -158,7 +90,7 @@ class OAuthPlugin extends GenericPlugin {
 	 * @return string
 	 */
 	function getContextSpecificPluginSettingsFile() {
-		print __FILE__." on ".__LINE__." for ".__FUNCTION__."<br/>";
+		// print __FILE__." on ".__LINE__." for ".__FUNCTION__."<br/>";
 		return $this->getPluginPath() . '/settings.xml';
 	}	
 	
@@ -201,28 +133,62 @@ class OAuthPlugin extends GenericPlugin {
 	
 	function setupOAuthHandler($hookName, $params) {
 		$page =& $params[0];
-		print __FILE__." on ".__LINE__." for ".__FUNCTION__." and " . $page . "<br/>";		
 
 		if ($page == 'oauth') {
+			// consumer elements from OAuth library
+			require_once(dirname(__FILE__).'/src/OAuth2/Autoloader.php');
+			OAuth2\Autoloader::register();
+
+			// register test classes
+			OAuth2\Autoloader::register(dirname(__FILE__).'/lib');
+
+			// print __FILE__." on ".__LINE__." for ".__FUNCTION__."<br/>";
+
+			$connectionCharset = Config::getVar('i18n', 'connection_charset');
+			$debug = Config::getVar('database', 'debug') ? true : false;
+			$connectOnInit = true;
+			$forceNew = false;	
+
+			$dsn = $this->getDriver().':dbname='.$this->getDatabasename().';host='.$this->getHost();
+	
+			// server elements
+
+			// $dsn is the Data Source Name for your database, for exmaple "mysql:dbname=my_oauth2_db;host=localhost"
+			$storage = new OAuth2\Storage\Pdo(array('dsn' => $dsn, 'username' => $this->getUsername(), 'password' => $this->getPassword()));
+
+			// Pass a storage object or array of storage objects to the OAuth2 server class
+			$server = new OAuth2\Server($storage);
+
+			// Add the "Client Credentials" grant type (it is the simplest of the grant types)
+			$server->addGrantType(new OAuth2\GrantType\ClientCredentials($storage));
+
+			// Add the "Authorization Code" grant type (this is where the oauth magic happens)
+			$server->addGrantType(new OAuth2\GrantType\AuthorizationCode($storage));	
+
+			$this->addLocaleData();		
 			$op =& $params[1];
 
 			if ($op) {
+				// print __FILE__." on ".__LINE__." for ".__FUNCTION__." and " . print_r($op, TRUE) . "<br/>";		
 				$OAuthFunctions  = array(
 					'userExists',
 					'getUserInfo',
 					'getConsumerKey',
 					'getLoginForm',
+					'AuthorizeController',
+					'TokenController',
+					'ResourceController',					
 					'getRequestToken',
 					'getResourceToken',					
 					'getAccessToken',										
 				);
-
-				if (in_array($op, $editorPages)) {
-					define('HANDLER_CLASS', 'setupOAuthHandler');
-					define('OAUTH_PLUGIN_NAME', $this->getName());
-					AppLocale::requireComponents(LOCALE_COMPONENT_APPLICATION_COMMON, LOCALE_COMPONENT_PKP_USER);
-					$handlerFile =& $params[2];
-					$handlerFile = $this->getHandlerPath() . 'OAuthPlugin.inc.php';
+				
+				// $this->{$methodName}($arg1, $arg2, $arg3);
+				// $this->$methodName($arg1, $arg2, $arg3);
+				// call_user_func_array(array($this, $methodName), array($arg1, $arg2, $arg3));
+				
+				if (in_array($op, $OAuthFunctions)) {
+					$this->$op($server, $storage);	
 				}
 			}
 		}
@@ -277,25 +243,73 @@ class OAuthPlugin extends GenericPlugin {
 		return isset($userId) && !empty($userId);	
 	}	
 
-	function getConsumerKey() {
+	function getConsumerKey($server, $storage) {
 		// get the consumer key to start the process
-		print __LINE__." - Hello world.";
+		// print __LINE__." - Hello world.";
 		exit;	
 	}
 	
-	function getLoginForm() {
+	// authorize elements
+	function getLoginForm($server, $storage) {
 		// redirect user to a login if the user is not logged in
 		
 	}
 	
+	function AuthorizeController($server, $storage) {
+		$request = OAuth2\Request::createFromGlobals();
+		$response = new OAuth2\Response();
 
-	function getRequestToken() {
+		// validate the authorize request
+		if (!$server->validateAuthorizeRequest($request, $response)) {
+			$response->send();
+			die;
+		}
+		// display an authorization form
+		if (empty($_POST)) {
+		  exit('
+		<form method="post">
+		  <label>Do You Authorize TestClient?</label><br />
+		  <input type="submit" name="authorized" value="yes">
+		  <input type="submit" name="authorized" value="no">
+		</form>');
+		}
+
+		// print the authorization code if the user has authorized your client
+		$is_authorized = ($_POST['authorized'] === 'yes');
+		$server->handleAuthorizeRequest($request, $response, $is_authorized);
+		if ($is_authorized) {
+		  // this is only here so that you get to see your code in the cURL request. Otherwise, we'd redirect back to the client
+		  $code = substr($response->getHttpHeader('Location'), strpos($response->getHttpHeader('Location'), 'code=')+5, 40);
+		  exit("SUCCESS Authorization Code: $code");
+		}
+		$response->send();
+	}
+
+
+	function TokenController($server, $storage) {
+		// Handle a request for an OAuth2.0 Access Token and send the response to the client
+		$server->handleTokenRequest(OAuth2\Request::createFromGlobals())->send();
+	}
+
+
+	function ResourceController($server, $storage) {
+		// Handle a request to a resource and authenticate the access token
+		if (!$server->verifyResourceRequest(OAuth2\Request::createFromGlobals())) {
+			$server->getResponse()->send();
+			die;
+		}
+		echo json_encode(array('success' => true, 'message' => 'You accessed my APIs!'));
+	}
+
+
+	// token elements
+	function getRequestToken($server, $storage) {
 		// get the request token aka token request
 		$server->handleTokenRequest(OAuth2\Request::createFromGlobals())->send();
 	}
 	
 
-	function getResourceToken() {
+	function getResourceToken($server, $storage) {
 		// Handle a request for an OAuth2.0 Access Token and send the response to the client
 		if (!$server->verifyResourceRequest(OAuth2\Request::createFromGlobals())) {
 			$server->getResponse()->send();
@@ -305,7 +319,7 @@ class OAuthPlugin extends GenericPlugin {
 	}
 	
 
-	function getAccessToken() {
+	function getAccessToken($server, $storage) {
 		// get the access token
 
 		$request = OAuth2\Request::createFromGlobals();
